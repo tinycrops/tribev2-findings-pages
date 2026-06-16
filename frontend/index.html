@@ -1,0 +1,127 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TRIBE v2 in-silico — findings</title>
+<style>
+ :root{--ink:#161616;--mut:#6a6a6a;--line:#e4e4e7;--accent:#7a3ea8;--good:#0a7d3c;
+  --bad:#b3261e;--blue:#1f6feb;--bg:#fbfafc}
+ *{box-sizing:border-box}
+ body{font:15px/1.6 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--ink);
+  max-width:920px;margin:0 auto;padding:40px 24px 70px;background:#fff}
+ h1{font-size:27px;margin:0 0 4px;letter-spacing:-.01em}
+ h2{font-size:18px;margin:34px 0 10px;border-bottom:2px solid var(--line);padding-bottom:5px}
+ .sub{color:var(--mut);margin:0 0 8px}
+ .lede{font-size:16px;color:#333;margin:14px 0 4px}
+ a{color:var(--blue);text-decoration:none} a:hover{text-decoration:underline}
+ .cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:18px 0}
+ .card{border:1px solid var(--line);border-radius:12px;padding:16px 18px;background:var(--bg);
+  display:flex;flex-direction:column}
+ .card h3{margin:0 0 6px;font-size:16px}
+ .card p{margin:0 0 12px;color:#444;font-size:14px;flex:1}
+ .card .go{font-weight:600}
+ .tag{display:inline-block;font-size:11px;padding:1px 8px;border-radius:20px;vertical-align:middle;margin-left:6px}
+ .ok{background:#e3f5ea;color:var(--good)} .hot{background:#fde9e7;color:var(--bad)}
+ .neu{background:#eef1f6;color:#3a4a63}
+ table{border-collapse:collapse;width:100%;margin:10px 0;font-size:14px}
+ th,td{border:1px solid var(--line);padding:7px 11px;text-align:left}
+ th{background:#f4f1f7;font-weight:600} td:first-child{font-weight:600}
+ .num{font-variant-numeric:tabular-nums}
+ ul{margin:8px 0;padding-left:22px} li{margin:5px 0}
+ code{font-family:ui-monospace,Menlo,monospace;font-size:13px;background:#f3f1f6;padding:1px 5px;border-radius:4px}
+ .meta{color:var(--mut);font-size:12.5px;margin-top:44px;border-top:1px solid var(--line);padding-top:14px}
+ .hl{background:#fff3bf;padding:0 3px;border-radius:3px}
+ @media(max-width:640px){.cards{grid-template-columns:1fr}}
+</style></head><body>
+
+<h1>Reading a brain model with controlled stimuli</h1>
+<p class="sub">In-silico neuroscience on <b>TRIBE v2</b> (<code>facebook/tribev2</code>) — Meta's
+tri-modal foundation model that predicts human fMRI responses · GB10 / Blackwell · 2026-06-15</p>
+
+<p class="lede">TRIBE v2 maps video, audio, and text onto the cortical surface (20484 fsaverage5
+vertices). We treat it as a subject in an fMRI experiment: feed it controlled stimuli, read out
+its <i>predicted</i> brain maps, and analyse them like a localizer study — no real brain data in
+the loop. Three experiments below.</p>
+
+<div class="cards">
+ <div class="card">
+  <h3>① Language localizer <span class="tag ok">confirmed</span></h3>
+  <p>Zero-shot, heard speech drives <b>auditory / superior-temporal cortex</b> — the model recovers
+  the textbook localization (Heschl's gyrus, planum temporale) with no training on this task.</p>
+  <span class="sub">Result summarized below ↓</span>
+ </div>
+ <div class="card">
+  <h3>② ASCII-cat LoRA finetune <span class="tag hot">refuted×2</span></h3>
+  <p>Swap the Llama-3.2-3B text extractor for a cat-art finetune. The shift is real (~8%) but
+  <b>not cat-specific</b> and lands in the <b>language network, not visual cortex</b>.</p>
+  <a class="go" href="./experiment.html">Open full report →</a>
+ </div>
+ <div class="card">
+  <h3>③ Cross-modal ASCII / image <span class="tag ok">ladder ✓</span> <span class="tag hot">convergence ✗</span></h3>
+  <p>Does the cat-art LoRA pull ASCII <i>text</i> toward visual cortex? An iconic n=1 cat said yes;
+  <b>6 real cats at scale said no</b>. The realism ladder holds; the convergence does not.</p>
+  <a class="go" href="./showcase.html">Open full report →</a>
+ </div>
+ <div class="card">
+  <h3>Method in one line <span class="tag neu">how</span></h3>
+  <p>Drive one frozen encoder branch in isolation (video-only / word-only events), read the predicted
+  fsaverage5 map, and compare maps in a common brain space. Every effect is guarded by a
+  null-swap control.</p>
+ </div>
+</div>
+
+<h2>① Heard speech → auditory cortex, zero-shot</h2>
+<p class="sub">Replicating the method of the TRIBE paper's Fig. 5: controlled linguistic stimuli in,
+predicted fsaverage5 responses out, analysed as a localizer.</p>
+<table>
+<tr><th>measure (top-5% activated vertices)</th><th>value</th></tr>
+<tr><td>auditory-cortex share</td><td class="num">47.5% (vs 7.2% prior)</td></tr>
+<tr><td>enrichment</td><td class="num"><b>6.6×</b></td></tr>
+<tr><td>strongest regions</td><td>transverse-temporal sulcus, <b>Heschl's gyrus</b>, lateral STG, planum temporale</td></tr>
+</table>
+<p class="sub">With no real brain data, the model recovers the localization of speech to primary +
+secondary auditory cortex. (The subtler <code>sentences &gt; word-lists</code> syntactic contrast is
+weak here — near-identical TTS audio, low single-block power.)</p>
+
+<h2>② Does a cat-art finetune leave a "cat fingerprint"? <span class="tag hot">no</span></h2>
+<p class="sub">An ASCII-cat LoRA (reproduced in bf16 from <code>pookie3000/ascii-cats</code>) swapped
+into the frozen text branch. Minimal-pair stimuli swap only the creature word.</p>
+<table>
+<tr><th>category</th><th>rel. change of brain map</th><th></th></tr>
+<tr><td>cat</td><td class="num">8.40%</td><td class="sub">not the largest</td></tr>
+<tr><td>dog</td><td class="num">8.72%</td><td class="sub"><b>moves most</b></td></tr>
+<tr><td>horse</td><td class="num">8.38%</td><td></td></tr>
+<tr><td>neutral</td><td class="num">9.43%</td><td></td></tr>
+</table>
+<ul>
+<li><b>Not cat-specific:</b> a roughly uniform ~8% drift across all categories — dog moves more than cat.</li>
+<li><b>Lands in language cortex:</b> 62.9% of most-changed vertices are language network (5.4× enrichment),
+<b>0.0% visual</b>. Both intuitive hypotheses — cat-selectivity, and a push toward visual cortex because
+ASCII art is "drawing" — were refuted.</li>
+<li><b>Control passed:</b> stock Llama through the exact finetune code path reproduces base to
+Δ = 0.004% (cosine 1.00000) — the 8% is genuinely the LoRA, not a cache/dtype artifact.</li>
+</ul>
+<p class="lede"><span class="hl">TRIBE's predicted maps are sensitive to the extractor's <b>distribution</b>
+but robust to its <b>semantic specialization</b>.</span> &nbsp;<a href="./experiment.html">Full report →</a></p>
+
+<h2>③ Cross-modal: a hint that didn't survive scale</h2>
+<p class="sub">The video branch (V-JEPA 2) reads a real cat photo straight into visual cortex
+(5.48× enrichment), and a single iconic ASCII cat <i>as text</i> seemed to jump from 0.85× → 2.05×
+visual under the finetune — an exciting cross-modal bridge.</p>
+<table>
+<tr><th>test</th><th>finding</th></tr>
+<tr><td>img2ascii realism ladder (bitmap → V-JEPA)</td><td><span class="tag ok">holds</span> higher-res ASCII ≈ more cat-like (cos 0.55 full &gt; reduced)</td></tr>
+<tr><td>finetune convergence (ASCII-text → image anchor)</td><td><span class="tag hot">refuted</span> gain −0.006 across 6 real cats (3/6 positive — null)</td></tr>
+</table>
+<p class="sub">The n=1 hint was an artifact of feeding the LoRA exactly the iconic style it was trained
+on. The honest signal only appeared after scaling with out-of-distribution inputs — a single
+in-distribution probe can badly over-promise. &nbsp;<a href="./showcase.html">Full report →</a></p>
+
+<h2>Reproducibility</h2>
+<p class="sub">Every number on the linked pages is recomputed from saved <code>.npz</code> maps, so the
+pages can't drift from the data. Each cross-modal effect is guarded by a null-swap control
+(stock model through the experimental code path must reproduce baseline to ~0). Built on PyTorch
+2.12 + CUDA 13 for Blackwell sm_121; text branch <code>meta-llama/Llama-3.2-3B</code>,
+video <code>V-JEPA 2</code>, audio <code>w2v-bert-2.0</code>.</p>
+
+<p class="meta">TRIBE v2 in-silico research · reports are fully self-contained (embedded figures) ·
+two intuitive cross-modal hypotheses tested and refuted, one localization confirmed.</p>
+</body></html>
