@@ -1,6 +1,21 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>TRIBE v2 in-silico — findings</title>
+<meta name="description" content="In-silico neuroscience on TRIBE v2, a model that predicts human brain responses to video, audio and text. Three experiments — including teaching it to read ASCII art.">
+<link rel="canonical" href="https://tinycrops.github.io/tribev2-findings-pages/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="TRIBE v2 · in-silico neuroscience">
+<meta property="og:title" content="Reading a model of the human brain with controlled stimuli">
+<meta property="og:description" content="TRIBE v2 predicts human brain responses. We teach it to read ASCII art and watch its visual cortex switch on — substantial, but for the wrong reason.">
+<meta property="og:url" content="https://tinycrops.github.io/tribev2-findings-pages/">
+<meta property="og:image" content="https://tinycrops.github.io/tribev2-findings-pages/og-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A cat rendered as colored ASCII art beside the title 'Teach an AI to draw cats — does it start to SEE them?'">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Reading a model of the human brain with controlled stimuli">
+<meta name="twitter:description" content="We teach TRIBE v2 to read ASCII art and watch its visual cortex switch on — substantial, but for the wrong reason.">
+<meta name="twitter:image" content="https://tinycrops.github.io/tribev2-findings-pages/og-card.png">
 <style>
  :root{--ink:#161616;--mut:#6a6a6a;--line:#e4e4e7;--accent:#7a3ea8;--good:#0a7d3c;
   --bad:#b3261e;--blue:#1f6feb;--bg:#fbfafc}
@@ -29,17 +44,35 @@
  code{font-family:ui-monospace,Menlo,monospace;font-size:13px;background:#f3f1f6;padding:1px 5px;border-radius:4px}
  .meta{color:var(--mut);font-size:12.5px;margin-top:44px;border-top:1px solid var(--line);padding-top:14px}
  .hl{background:#fff3bf;padding:0 3px;border-radius:3px}
+ .feature{display:block;margin:20px 0 6px;padding:18px 22px;border-radius:14px;
+  background:linear-gradient(110deg,#241b33,#15101f);color:#eee;text-decoration:none;
+  border:1px solid #3a2f50}
+ .feature:hover{border-color:#6a4f9a;text-decoration:none}
+ .feature .ftag{display:inline-block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:#caa9f0;font-weight:700;margin-bottom:8px}
+ .feature b{color:#fff;font-size:18px;display:block;margin-bottom:6px;line-height:1.3}
+ .feature span:last-child{color:#cabfe0;font-size:14px}
+ .feature span:last-child b{display:inline;color:#ffb088;font-size:14px}
  @media(max-width:640px){.cards{grid-template-columns:1fr}}
 </style></head><body>
 
 <h1>Reading a brain model with controlled stimuli</h1>
 <p class="sub">In-silico neuroscience on <b>TRIBE v2</b> (<code>facebook/tribev2</code>) — Meta's
-tri-modal foundation model that predicts human fMRI responses · GB10 / Blackwell · 2026-06-15</p>
+tri-modal foundation model that predicts human fMRI responses · GB10 / Blackwell · 2026-06-15 ·
+source: <a href="https://github.com/tinycrops/tribev2-research">tribev2-research ↗</a></p>
 
 <p class="lede">TRIBE v2 maps video, audio, and text onto the cortical surface (20484 fsaverage5
 vertices). We treat it as a subject in an fMRI experiment: feed it controlled stimuli, read out
 its <i>predicted</i> brain maps, and analyse them like a localizer study — no real brain data in
-the loop. Three experiments below.</p>
+the loop. New here? Start with the walkthrough below; the four experiments follow.</p>
+
+<a class="feature" href="./substantiality.html">
+ <span class="ftag">newest · start here</span>
+ <b>When you teach an AI to draw cats, does it start to “see” them?</b>
+ <span>A from-scratch walkthrough for newcomers, with live animation and the
+ <b>substantiality</b> test: across 86 hand-drawn ASCII animals the finetune pushes the predicted
+ brain map into visual cortex <b>100% of the time</b> — substantial, but about style, not cats. →</span>
+</a>
 
 <div class="cards">
  <div class="card">
@@ -61,10 +94,11 @@ the loop. Three experiments below.</p>
   <a class="go" href="./showcase.html">Open full report →</a>
  </div>
  <div class="card">
-  <h3>Method in one line <span class="tag neu">how</span></h3>
-  <p>Drive one frozen encoder branch in isolation (video-only / word-only events), read the predicted
-  fsaverage5 map, and compare maps in a common brain space. Every effect is guarded by a
-  null-swap control.</p>
+  <h3>④ Substantiality test <span class="tag ok">substantial</span> <span class="tag hot">generic</span></h3>
+  <p>Scale the ASCII-text effect to <b>86 hand-drawn animals</b> with a control. The finetune moves
+  every one toward visual cortex (100%) — but dogs as much as cats. A line-art <b>style</b> detector,
+  not a cat detector.</p>
+  <a class="go" href="./substantiality.html">Newcomer walkthrough →</a>
  </div>
 </div>
 
@@ -109,11 +143,12 @@ visual under the finetune — an exciting cross-modal bridge.</p>
 <table>
 <tr><th>test</th><th>finding</th></tr>
 <tr><td>img2ascii realism ladder (bitmap → V-JEPA)</td><td><span class="tag ok">holds</span> higher-res ASCII ≈ more cat-like (cos 0.55 full &gt; reduced)</td></tr>
-<tr><td>finetune convergence (ASCII-text → image anchor)</td><td><span class="tag hot">refuted</span> gain −0.006 across 6 real cats (3/6 positive — null)</td></tr>
+<tr><td>finetune convergence (ASCII-text → <i>photo</i> anchor)</td><td><span class="tag hot">null</span> gain −0.006 across 6 img2ascii cats (3/6 positive)</td></tr>
 </table>
-<p class="sub">The n=1 hint was an artifact of feeding the LoRA exactly the iconic style it was trained
-on. The honest signal only appeared after scaling with out-of-distribution inputs — a single
-in-distribution probe can badly over-promise. &nbsp;<a href="./showcase.html">Full report →</a></p>
+<p class="sub">The photo-to-ASCII scale-up came back null — but it changed the <i>stimulus
+distribution</i> (line art → brightness-ramp mush), so it couldn't actually test the n=1 hint.
+Scaling the hint <b>in its own regime</b> (experiment ④) shows it was real after all — just
+generic. &nbsp;<a href="./showcase.html">Full report →</a> · <a href="./substantiality.html">see the correction in ④ →</a></p>
 
 <h2>Reproducibility</h2>
 <p class="sub">Every number on the linked pages is recomputed from saved <code>.npz</code> maps, so the
@@ -122,6 +157,8 @@ pages can't drift from the data. Each cross-modal effect is guarded by a null-sw
 2.12 + CUDA 13 for Blackwell sm_121; text branch <code>meta-llama/Llama-3.2-3B</code>,
 video <code>V-JEPA 2</code>, audio <code>w2v-bert-2.0</code>.</p>
 
-<p class="meta">TRIBE v2 in-silico research · reports are fully self-contained (embedded figures) ·
-two intuitive cross-modal hypotheses tested and refuted, one localization confirmed.</p>
+<p class="meta">TRIBE v2 in-silico research · source &amp; data:
+<a href="https://github.com/tinycrops/tribev2-research">github.com/tinycrops/tribev2-research</a> ·
+reports are fully self-contained (embedded figures) · one localization confirmed, and a
+cross-modal effect that proved substantial but generic.</p>
 </body></html>
